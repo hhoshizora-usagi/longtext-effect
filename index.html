@@ -61,6 +61,9 @@ button{font:inherit;color:inherit}
 .replay{border:1px solid rgba(255,255,255,.22);background:transparent;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--ink-soft);letter-spacing:.06em;transition:border-color .2s,color .2s;white-space:nowrap}
 .replay:hover{border-color:var(--accent);color:var(--accent)}
 
+/* もう一回のときに、いったん全アニメを止めて最初へ戻すためのクラス */
+.norestart, .norestart * { transition: none !important; }
+
 .lt{width:100%;max-width:640px;text-align:left;font-size:15px;line-height:1.95;color:var(--ink-soft);position:relative}
 .lt p{position:relative}
 .lt p b{color:var(--ink);font-weight:700}
@@ -223,17 +226,16 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     if (bx) bx.innerHTML = '<b>ご注意\u3001</b>' + (LT.custom || '設置には現地調査が必要です。申請の関係で1ヶ月ほどお時間をいただく場合があります。');
   }
 
-  /* ★ もう一回の再生：子要素のCSSアニメをいったん止めてから、再スタートする */
+  /* ★ もう一回の再生：いったん全トランジションを切って最初へ戻し、そこから再スタート */
   function restart(el){
     if (!el) return;
-    var anims = el.getAnimations ? el.getAnimations({subtree:true}) : [];
-    anims.forEach(function(a){ try{ a.cancel(); }catch(e){} });
+    el.classList.add('norestart');
     el.classList.remove('go');
     void el.offsetWidth;
     void el.offsetWidth;
+    el.classList.remove('norestart');
+    void el.offsetWidth;
     el.classList.add('go');
-    var rest = el.getAnimations ? el.getAnimations({subtree:true}) : [];
-    rest.forEach(function(a){ try{ a.currentTime = 0; a.play(); }catch(e){} });
   }
   function fkPlay(){ restart($('fx-fk')); }
   function wpPlay(){ restart($('fx-wp')); }
