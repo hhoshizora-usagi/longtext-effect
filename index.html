@@ -212,7 +212,7 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
       var w = (LT.custom || '構想から運用まで、ひとつの窓口で対応します。').split(/[\u3001。\s]+/).filter(Boolean);
       kinEl.innerHTML = w.map(function(s, i){
         var hot = /\d/.test(s) || /^[無蓄余適]/.test(s);
-        return '<span' + (hot ? ' class="hot"' : '') + ' style="--i:' + i + '">' + esc(s) + '。</span>';
+        return '<span' + (hot ? ' class="hot"' : '') + ' style="--i:' + i + '">' + esc(s) + '。';
       }).join('');
     }
     TYPE.s1 = (LT.custom || 'RA-12 蓄電池の運用手順について');
@@ -223,17 +223,17 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     if (bx) bx.innerHTML = '<b>ご注意\u3001</b>' + (LT.custom || '設置には現地調査が必要です。申請の関係で1ヶ月ほどお時間をいただく場合があります。');
   }
 
-  /* ★ もう一回の再生：いったんアニメを止めてから、次のフレームで再スタート */
+  /* ★ もう一回の再生：子要素のCSSアニメをいったん止めてから、再スタートする */
   function restart(el){
     if (!el) return;
-    el.style.setProperty('transition','none');
+    var anims = el.getAnimations ? el.getAnimations({subtree:true}) : [];
+    anims.forEach(function(a){ try{ a.cancel(); }catch(e){} });
     el.classList.remove('go');
     void el.offsetWidth;
-    requestAnimationFrame(function(){
-      el.style.removeProperty('transition');
-      void el.offsetWidth;
-      requestAnimationFrame(function(){ el.classList.add('go'); });
-    });
+    void el.offsetWidth;
+    el.classList.add('go');
+    var rest = el.getAnimations ? el.getAnimations({subtree:true}) : [];
+    rest.forEach(function(a){ try{ a.currentTime = 0; a.play(); }catch(e){} });
   }
   function fkPlay(){ restart($('fx-fk')); }
   function wpPlay(){ restart($('fx-wp')); }
