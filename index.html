@@ -60,10 +60,6 @@ button{font:inherit;color:inherit}
 .foot code{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .replay{border:1px solid rgba(255,255,255,.22);background:transparent;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--ink-soft);letter-spacing:.06em;transition:border-color .2s,color .2s;white-space:nowrap}
 .replay:hover{border-color:var(--accent);color:var(--accent)}
-
-/* もう一回のときに、いったん全アニメを止めて最初へ戻すためのクラス */
-.norestart, .norestart * { transition: none !important; }
-
 .lt{width:100%;max-width:640px;text-align:left;font-size:15px;line-height:1.95;color:var(--ink-soft);position:relative}
 .lt p{position:relative}
 .lt p b{color:var(--ink);font-weight:700}
@@ -122,6 +118,8 @@ button{font:inherit;color:inherit}
 .box.go::before,.box.go::after{opacity:1}
 .box .body{opacity:0;transition:opacity .7s ease;transition-delay:1s}
 .box.go .body{opacity:1}
+/* ★ 再スタート中は、中身も疑似要素も含めて全トランジションを一時無効化 */
+.restarting, .restarting *, .restarting::before, .restarting::after, .restarting *::before, .restarting *::after{transition:none!important}
 footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color:var(--muted);letter-spacing:.08em}
 @media (max-width:900px){
   .grid{grid-template-columns:1fr;gap:20px}
@@ -215,7 +213,7 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
       var w = (LT.custom || '構想から運用まで、ひとつの窓口で対応します。').split(/[\u3001。\s]+/).filter(Boolean);
       kinEl.innerHTML = w.map(function(s, i){
         var hot = /\d/.test(s) || /^[無蓄余適]/.test(s);
-        return '<span' + (hot ? ' class="hot"' : '') + ' style="--i:' + i + '">' + esc(s) + '。';
+        return '<span' + (hot ? ' class="hot"' : '') + ' style="--i:' + i + '">' + esc(s) + '。</span>';
       }).join('');
     }
     TYPE.s1 = (LT.custom || 'RA-12 蓄電池の運用手順について');
@@ -226,16 +224,15 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     if (bx) bx.innerHTML = '<b>ご注意\u3001</b>' + (LT.custom || '設置には現地調査が必要です。申請の関係で1ヶ月ほどお時間をいただく場合があります。');
   }
 
-  /* ★ もう一回の再生：いったん全トランジションを切って最初へ戻し、そこから再スタート */
+  /* ★ もう一回の再生：全トランジション（中身・疑似要素込み）を一旦OFF→初期状態→ON→再生 */
   function restart(el){
     if (!el) return;
-    el.classList.add('norestart');
+    el.classList.add('restarting');
     el.classList.remove('go');
     void el.offsetWidth;
+    el.classList.remove('restarting');
     void el.offsetWidth;
-    el.classList.remove('norestart');
-    void el.offsetWidth;
-    el.classList.add('go');
+    requestAnimationFrame(function(){ el.classList.add('go'); });
   }
   function fkPlay(){ restart($('fx-fk')); }
   function wpPlay(){ restart($('fx-wp')); }
