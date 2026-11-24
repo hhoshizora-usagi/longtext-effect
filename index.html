@@ -56,10 +56,13 @@ button{font:inherit;color:inherit}
 .meta p{font-size:14px;color:var(--ink-soft)}
 .meta .use{font-size:13px;color:var(--ink-soft)}
 .meta .use b{color:var(--accent);font-weight:700;margin-right:6px}
-.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
 .foot code{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .replay{border:1px solid rgba(255,255,255,.22);background:transparent;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--ink-soft);letter-spacing:.06em;transition:border-color .2s,color .2s;white-space:nowrap}
 .replay:hover{border-color:var(--accent);color:var(--accent)}
+.foot .copy{border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:6px 14px;font-size:12px;cursor:pointer;color:var(--accent);letter-spacing:.06em;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.foot .copy:hover{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+.foot .copy.ok{border-color:rgba(130,230,160,.7);color:#a8f0bf;background:rgba(130,230,160,.16)}
 .lt{width:100%;max-width:640px;text-align:left;font-size:15px;line-height:1.95;color:var(--ink-soft);position:relative}
 .lt p{position:relative}
 .lt p b{color:var(--ink);font-weight:700}
@@ -179,10 +182,10 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
   function esc(c){ return c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   var LT = {
-    lead: '蓄電池と太陽光発電設備を\u3001構想から運用までひとつの窓口で。',
+    lead: '蓄電池と太陽光発電設備を、構想から運用までひとつの窓口で。',
     lines: [
-      '設備の設置に必要な8項目\u2014設計\u30fb施工\u30fb保守\u307b\u304b\u2014をチームで対応します。',
-      '導入済みの137kWh設備から、外部蓄電池の余剰を使って\u3001無駄なく運用しています。',
+      '設備の設置に必要な8項目—設計・施工・保守ほか—をチームで対応します。',
+      '導入済みの137kWh設備から、外部蓄電池の余剰を使って、無駄なく運用しています。',
       '契約から数年先までの運用計画も、まとめてご相談ください。'
     ],
     custom: ''
@@ -210,7 +213,7 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     });
     var kinEl = $('fx-kin');
     if (kinEl){
-      var w = (LT.custom || '構想から運用まで、ひとつの窓口で対応します。').split(/[\u3001。\s]+/).filter(Boolean);
+      var w = (LT.custom || '構想から運用まで、ひとつの窓口で対応します。').split(/[、。\s]+/).filter(Boolean);
       kinEl.innerHTML = w.map(function(s, i){
         var hot = /\d/.test(s) || /^[無蓄余適]/.test(s);
         return '<span' + (hot ? ' class="hot"' : '') + ' style="--i:' + i + '">' + esc(s) + '。</span>';
@@ -221,7 +224,7 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     var shp = $('fx-shp-body');
     if (shp) shp.innerHTML = (LT.custom || '契約から数年先までの運用計画も、まとめてご相談ください。');
     var bx = $('fx-box-body');
-    if (bx) bx.innerHTML = '<b>ご注意\u3001</b>' + (LT.custom || '設置には現地調査が必要です。申請の関係で1ヶ月ほどお時間をいただく場合があります。');
+    if (bx) bx.innerHTML = '<b>ご注意、</b>' + (LT.custom || '設置には現地調査が必要です。申請の関係で1ヶ月ほどお時間をいただく場合があります。');
   }
 
   /* ★ もう一回の再生：全トランジション（中身・疑似要素込み）を一旦OFF→初期状態→ON→再生 */
@@ -296,6 +299,60 @@ footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:12px;color
     LT.custom = v;
     ltRender();
     playAll();
+  });
+
+  /* ============================================================
+     コードのコピー（そのエフェクトだけが動く単体HTMLを作る）
+     ============================================================ */
+  function makeSnippet(fx){
+    var card = document.querySelector('.card[data-fx="' + fx + '"]');
+    if (!card) return '';
+    var stageEl = card.querySelector('.stage');
+    var stage = stageEl.outerHTML;
+    var css = document.querySelector('style').textContent;
+    var accent = root.getAttribute('data-accent') || 'orange';
+    var title = card.querySelector('h2').childNodes[0].textContent.trim();
+    var first = stageEl.firstElementChild;
+    var tid = first ? first.id : '';
+    var js = [
+      '(function(){',
+      'var reduced=false;',
+      'var $=function(id){return document.getElementById(id);};',
+      restart.toString(),
+      'var TYPE=' + JSON.stringify({s1:TYPE.s1, s2:TYPE.s2, to:null}) + ';',
+      typePlay.toString(),
+      fx === 'type' ? 'typePlay();' : 'restart($(' + JSON.stringify(tid) + '));',
+      '})();'
+    ].join('\n');
+    return '<!DOCTYPE html>\n<html lang="ja" data-accent="' + accent + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>' + title + '</title>\n<style>\n' + css + '\n</style>\n</head>\n<body>\n<div class="wrap" style="padding:48px 0">' + stage + '</div>\n<script>\n' + js + '\n<\/script>\n</body>\n</html>';
+  }
+  function copyFallback(text, done){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.top = '-1000px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    ta.remove(); if (done) done();
+  }
+  function copyCode(fx, btn){
+    var text = makeSnippet(fx);
+    function done(){
+      if (btn.__t === undefined) btn.__t = btn.textContent;
+      btn.textContent = 'コピーした ✓'; btn.classList.add('ok');
+      clearTimeout(btn.__k);
+      btn.__k = setTimeout(function(){ btn.textContent = btn.__t; btn.classList.remove('ok'); }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ copyFallback(text, done); });
+    } else { copyFallback(text, done); }
+  }
+  document.querySelectorAll('.card').forEach(function(c){
+    var foot = c.querySelector('.foot');
+    if (!foot) return;
+    var fx = c.getAttribute('data-fx');
+    var b = document.createElement('button');
+    b.className = 'copy'; b.type = 'button'; b.textContent = 'コードをコピー';
+    b.addEventListener('click', function(){ copyCode(fx, b); });
+    foot.appendChild(b);
   });
 
   ltRender();
